@@ -15,18 +15,31 @@
 
   <main class="max-w-md mx-auto space-y-4">
     
+    <!-- FINE ACTION FORM -->
     <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-amber-400 border-b border-slate-700 pb-2">Log a Fine</h2>
       
+      <!-- 1. SELECT OR ADD PLAYER -->
       <div>
         <label class="block text-xs text-slate-400 mb-1 font-medium">Select Player</label>
         <select id="playerSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
-          </select>
+          <!-- Players list loaded automatically -->
+        </select>
+
+        <!-- Add Player Row -->
+        <div class="flex gap-2 mt-2">
+          <input type="text" id="newPlayerInput" placeholder="Add new player name..." class="flex-1 bg-slate-900/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+          <button onclick="addNewPlayer()" class="bg-slate-700 hover:bg-slate-600 text-amber-400 font-bold px-3 py-2 rounded-xl text-xs transition">
+            + Add Player
+          </button>
+        </div>
       </div>
 
+      <!-- 2. PRESET FINE DROPDOWN -->
       <div>
-        <label class="block text-xs text-slate-400 mb-1 font-medium">Fine Reason</label>
-        <select id="fineSelect" onchange="toggleCustomFine()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
+        <label class="block text-xs text-slate-400 mb-1 font-medium">Select Preset Fine</label>
+        <select id="fineSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
+          <option value="">-- Choose from standard fines --</option>
           <option value="Dropped Catch">Dropped Catch</option>
           <option value="Miss Field">Miss Field</option>
           <option value="Foot Fielding">Foot Fielding</option>
@@ -38,12 +51,12 @@
           <option value="Fines No Show">Fines No Show</option>
           <option value="Non Stafford Kit">Non Stafford Kit</option>
           <option value="No Passion">No Passion</option>
-          <option value="CUSTOM">✍️ Enter Custom Fine...</option>
         </select>
       </div>
 
-      <div id="customFineGroup" class="hidden">
-        <label class="block text-xs text-slate-400 mb-1 font-medium">Custom Fine Description</label>
+      <!-- 3. PERMANENT CUSTOM FINE INPUT SPOT -->
+      <div>
+        <label class="block text-xs text-slate-400 mb-1 font-medium">Or Type Custom Fine</label>
         <input type="text" id="customFineInput" placeholder="e.g. Fielding like Tony" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
       </div>
 
@@ -52,6 +65,7 @@
       </button>
     </div>
 
+    <!-- PLAYER SUMMARY & HISTORY -->
     <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-3">
       <div class="flex justify-between items-center border-b border-slate-700 pb-2">
         <h2 id="viewPlayerName" class="text-sm font-semibold uppercase tracking-wider text-amber-400">Player Fines</h2>
@@ -59,7 +73,8 @@
       </div>
 
       <div id="fineHistory" class="space-y-2 text-xs text-slate-300 min-h-[60px]">
-        </div>
+        <!-- Dynamic Fine List -->
+      </div>
 
       <button onclick="clearCurrentPlayer()" class="w-full text-red-400 text-xs text-center pt-2 hover:underline">
         Reset this player's fines
@@ -69,51 +84,62 @@
   </main>
 
   <script>
-    const defaultPlayers = [
+    const initialPlayers = [
       "Ollie Peters", "Trev", "Ben", "Chris", "Kyle", "Joe (C)", 
       "James Found", "Toby", "Ali", "Zach", "Jack", "Paul", "Nithin", 
       "Dc", "Charles", "Manu", "James For", "Nikil", "Tony", "Ted", 
       "Sean", "Arnav", "Ant", "Jonny", "Dan", "Chris Dob", "Jas", "Steve"
     ];
 
-    // Load data from LocalStorage or initialize empty structure
+    // Load custom players list & fine data from local storage
+    let players = JSON.parse(localStorage.getItem('cricket_players_list')) || initialPlayers;
     let fineData = JSON.parse(localStorage.getItem('cricket_fines_data')) || {};
 
-    // Initialize UI
     const playerSelect = document.getElementById('playerSelect');
-    
-    defaultPlayers.forEach(p => {
-      const option = document.createElement('option');
-      option.value = p;
-      option.textContent = p;
-      playerSelect.appendChild(option);
-    });
+
+    function renderPlayerDropdown() {
+      playerSelect.innerHTML = '';
+      players.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p;
+        option.textContent = p;
+        playerSelect.appendChild(option);
+      });
+    }
+
+    function addNewPlayer() {
+      const input = document.getElementById('newPlayerInput');
+      const newName = input.value.trim();
+      if (!newName) return;
+      
+      if (!players.includes(newName)) {
+        players.push(newName);
+        localStorage.setItem('cricket_players_list', JSON.stringify(players));
+        renderPlayerDropdown();
+      }
+      
+      playerSelect.value = newName;
+      input.value = '';
+      updatePlayerView();
+    }
 
     playerSelect.addEventListener('change', updatePlayerView);
-
-    function toggleCustomFine() {
-      const fineSelect = document.getElementById('fineSelect');
-      const customGroup = document.getElementById('customFineGroup');
-      if (fineSelect.value === 'CUSTOM') {
-        customGroup.classList.remove('hidden');
-      } else {
-        customGroup.classList.add('hidden');
-      }
-    }
 
     function logFine() {
       const player = playerSelect.value;
       const fineSelect = document.getElementById('fineSelect');
-      let fineName = fineSelect.value;
+      const customInput = document.getElementById('customFineInput');
+      
+      let fineName = customInput.value.trim();
 
-      if (fineName === 'CUSTOM') {
-        const customInput = document.getElementById('customFineInput');
-        fineName = customInput.value.trim();
-        if (!fineName) {
-          alert('Please enter a custom fine description.');
-          return;
-        }
-        customInput.value = '';
+      // If custom fine text is empty, fall back to preset dropdown
+      if (!fineName) {
+        fineName = fineSelect.value;
+      }
+
+      if (!fineName) {
+        alert('Please select a preset fine or type a custom fine.');
+        return;
       }
 
       if (!fineData[player]) fineData[player] = {};
@@ -121,6 +147,10 @@
 
       // Save to localStorage
       localStorage.setItem('cricket_fines_data', JSON.stringify(fineData));
+      
+      // Reset inputs & update UI
+      customInput.value = '';
+      fineSelect.value = '';
       updatePlayerView();
     }
 
@@ -129,6 +159,13 @@
       const historyDiv = document.getElementById('fineHistory');
       const nameHeader = document.getElementById('viewPlayerName');
       const totalBadge = document.getElementById('viewPlayerTotal');
+
+      if (!player) {
+        nameHeader.textContent = "No Player Selected";
+        totalBadge.textContent = "0 Fines";
+        historyDiv.innerHTML = '<p class="text-slate-500 italic py-2">Add or select a player to view fines.</p>';
+        return;
+      }
 
       nameHeader.textContent = `${player}'s Fines`;
 
@@ -158,6 +195,7 @@
 
     function clearCurrentPlayer() {
       const player = playerSelect.value;
+      if (!player) return;
       if (confirm(`Clear all fines for ${player}?`)) {
         delete fineData[player];
         localStorage.setItem('cricket_fines_data', JSON.stringify(fineData));
@@ -165,7 +203,8 @@
       }
     }
 
-    // Initial Render
+    // Initialize UI on load
+    renderPlayerDropdown();
     updatePlayerView();
   </script>
 </body>
