@@ -120,4 +120,53 @@
       fineData[player][fineName] = (fineData[player][fineName] || 0) + 1;
 
       // Save to localStorage
-      localStorage.setItem('cricket_fines_data
+      localStorage.setItem('cricket_fines_data', JSON.stringify(fineData));
+      updatePlayerView();
+    }
+
+    function updatePlayerView() {
+      const player = playerSelect.value;
+      const historyDiv = document.getElementById('fineHistory');
+      const nameHeader = document.getElementById('viewPlayerName');
+      const totalBadge = document.getElementById('viewPlayerTotal');
+
+      nameHeader.textContent = `${player}'s Fines`;
+
+      const playerFines = fineData[player] || {};
+      const entries = Object.entries(playerFines);
+      
+      let grandTotal = 0;
+      historyDiv.innerHTML = '';
+
+      if (entries.length === 0) {
+        historyDiv.innerHTML = '<p class="text-slate-500 italic py-2">No fines logged yet.</p>';
+      } else {
+        entries.forEach(([fine, count]) => {
+          grandTotal += count;
+          const row = document.createElement('div');
+          row.className = 'flex justify-between items-center bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50';
+          row.innerHTML = `
+            <span>${fine}</span>
+            <span class="bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded text-xs">${count}</span>
+          `;
+          historyDiv.appendChild(row);
+        });
+      }
+
+      totalBadge.textContent = `${grandTotal} Total Fine${grandTotal === 1 ? '' : 's'}`;
+    }
+
+    function clearCurrentPlayer() {
+      const player = playerSelect.value;
+      if (confirm(`Clear all fines for ${player}?`)) {
+        delete fineData[player];
+        localStorage.setItem('cricket_fines_data', JSON.stringify(fineData));
+        updatePlayerView();
+      }
+    }
+
+    // Initial Render
+    updatePlayerView();
+  </script>
+</body>
+</html>
