@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cricket Fines App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 font-sans">
+  <header class="text-center my-4">
+    <h1 class="text-2xl font-bold text-amber-400">🏏 Team Fines Dashboard</h1>
+    <p class="text-slate-400 text-xs mt-1">Stafford Cricket Fine Tracker</p>
+  </header>
+
+  <main id="app" class="max-w-md mx-auto space-y-3"></main>
+
+  <script>
+    // Sample data pulled directly from your Fines spreadsheet
+    const players = [
+      { name: "Ollie Peters", total: 47, fines: { "Dropped Catches": 7, "Miss Fields": 6, "Fines No Show": 6 } },
+      { name: "Trev", total: 44, fines: { "Dropped Catches": 9, "Drinking": 9, "Complaining": 8 } },
+      { name: "Joe (C)", total: 53, fines: { "Non Stafford Kit": 7, "Arguing": 6, "Miss Fields": 5 } },
+      { name: "Tony", total: 39, fines: { "Fines No Show": 6, "Late": 5, "Miss Fields": 5 } },
+      { name: "Chris", total: 50, fines: { "Fines No Show": 8, "Non Stafford Kit": 8, "Miss Fields": 6 } }
+    ];
+
+    const app = document.getElementById('app');
+    players.forEach(p => {
+      const card = document.createElement('div');
+      card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md";
+      
+      let finesHtml = Object.entries(p.fines).map(([fine, count]) => 
+        `<div class="flex justify-between items-center my-1 text-xs text-slate-300">
+          <span>${fine}</span>
+          <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">${count}</span>
+        </div>`
+      ).join('');
+      
+      card.innerHTML = `
+        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-700">
+          <div>
+            <h2 class="text-base font-bold text-white">${p.name}</h2>
+            <span class="text-xs text-amber-400 font-semibold">${p.total} total fines</span>
+          </div>
+          <button onclick="alert('Logged 1 fine for ${p.name}')" class="bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs active:scale-95 transition">+ Fine</button>
+        </div>
+        <div>${finesHtml}</div>
+      `;
+      app.appendChild(card);
+    });
+  </script>
+</body>
+</html>
