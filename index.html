@@ -16,29 +16,25 @@
   <main class="max-w-md mx-auto space-y-4">
     
     <!-- NAVIGATION TABS -->
-    <div class="flex bg-slate-800 rounded-xl p-1 shadow-md border border-slate-700">
-      <button id="tabLogBtn" onclick="switchTab('log')" class="flex-1 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 shadow transition">
+    <div class="flex gap-2">
+      <button id="navLog" onclick="switchView('log')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
         Log Fines
       </button>
-      <button id="tabOverviewBtn" onclick="switchTab('overview')" class="flex-1 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition">
+      <button id="navOverview" onclick="switchView('overview')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
         Team Overview
       </button>
     </div>
 
-    <!-- ==================== VIEW 1: LOG FINES ==================== -->
-    <div id="logView" class="space-y-4">
+    <!-- VIEW 1: LOGGING SECTION -->
+    <div id="viewLog" class="space-y-4">
       
-      <!-- FINE ACTION FORM -->
       <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
         
-        <!-- 1. SELECT OR ADD PLAYER -->
+        <!-- Select or Add Player -->
         <div>
           <label class="block text-xs text-slate-400 mb-1 font-medium">Select Player</label>
-          <select id="playerSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
-            <!-- Players list loaded automatically -->
-          </select>
+          <select id="playerSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400"></select>
 
-          <!-- Add Player Row -->
           <div class="flex gap-2 mt-2">
             <input type="text" id="newPlayerInput" placeholder="Add new player name..." class="flex-1 bg-slate-900/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
             <button onclick="addNewPlayer()" class="bg-slate-700 hover:bg-slate-600 text-amber-400 font-bold px-3 py-2 rounded-xl text-xs transition">
@@ -47,11 +43,11 @@
           </div>
         </div>
 
-        <!-- 2. PRESET FINE DROPDOWN -->
+        <!-- Fine Selection Dropdown -->
         <div>
-          <label class="block text-xs text-slate-400 mb-1 font-medium">Select Preset Fine</label>
-          <select id="fineSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
-            <option value="">-- Choose from standard fines --</option>
+          <label class="block text-xs text-slate-400 mb-1 font-medium">Fine Reason</label>
+          <select id="fineSelect" onchange="toggleCustomFine()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
+            <option value="">-- Choose fine --</option>
             <option value="Dropped Catch">Dropped Catch</option>
             <option value="Miss Field">Miss Field</option>
             <option value="Foot Fielding">Foot Fielding</option>
@@ -63,12 +59,13 @@
             <option value="Fines No Show">Fines No Show</option>
             <option value="Non Stafford Kit">Non Stafford Kit</option>
             <option value="No Passion">No Passion</option>
+            <option value="CUSTOM">✍️ Enter Custom Fine...</option>
           </select>
         </div>
 
-        <!-- 3. PERMANENT CUSTOM FINE INPUT SPOT -->
-        <div>
-          <label class="block text-xs text-slate-400 mb-1 font-medium">Or Type Custom Fine</label>
+        <!-- Custom Fine Input (Only visible when CUSTOM option selected) -->
+        <div id="customFineGroup" class="hidden">
+          <label class="block text-xs text-slate-400 mb-1 font-medium">Custom Fine Description</label>
           <input type="text" id="customFineInput" placeholder="e.g. Fielding like Tony" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
         </div>
 
@@ -77,27 +74,25 @@
         </button>
       </div>
 
-      <!-- PLAYER SUMMARY (CURRENT PLAYER) -->
+      <!-- Individual Player Fine History -->
       <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-3">
         <div class="flex justify-between items-center border-b border-slate-700 pb-2">
           <h2 id="viewPlayerName" class="text-sm font-semibold uppercase tracking-wider text-amber-400">Player Fines</h2>
           <span id="viewPlayerTotal" class="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-1 rounded-full font-bold">0 Fines</span>
         </div>
-
-        <div id="fineHistory" class="space-y-2 text-xs text-slate-300 min-h-[60px]">
-          <!-- Dynamic Fine List -->
-        </div>
-
+        <div id="fineHistory" class="space-y-2 text-xs text-slate-300 min-h-[60px]"></div>
         <button onclick="clearCurrentPlayer()" class="w-full text-red-400 text-xs text-center pt-2 hover:underline">
           Reset this player's fines
         </button>
       </div>
-
     </div>
 
-    <!-- ==================== VIEW 2: TEAM OVERVIEW ==================== -->
-    <div id="overviewView" class="hidden space-y-3">
-      <!-- Generated via JavaScript to look like the first version -->
+    <!-- VIEW 2: TEAM OVERVIEW -->
+    <div id="viewOverview" class="space-y-4 hidden">
+      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2">
+        <p class="text-xs text-slate-400 text-center">Full team breakdown ranked by total fines.</p>
+      </div>
+      <div id="overviewContainer" class="space-y-3"></div>
     </div>
 
   </main>
@@ -110,63 +105,70 @@
       "Sean", "Arnav", "Ant", "Jonny", "Dan", "Chris Dob", "Jas", "Steve"
     ];
 
-    // Load custom players list & fine data from local storage
     let players = JSON.parse(localStorage.getItem('cricket_players_list')) || initialPlayers;
     let fineData = JSON.parse(localStorage.getItem('cricket_fines_data')) || {};
 
-    const playerSelect = document.getElementById('playerSelect');
+    // Navigation Switcher
+    function switchView(view) {
+      const navLog = document.getElementById('navLog');
+      const navOverview = document.getElementById('navOverview');
+      const viewLog = document.getElementById('viewLog');
+      const viewOverview = document.getElementById('viewOverview');
 
-    // TAB SWITCHING LOGIC
-    function switchTab(tab) {
-      const logView = document.getElementById('logView');
-      const overviewView = document.getElementById('overviewView');
-      const tabLogBtn = document.getElementById('tabLogBtn');
-      const tabOverviewBtn = document.getElementById('tabOverviewBtn');
-
-      if (tab === 'log') {
-        logView.classList.remove('hidden');
-        overviewView.classList.add('hidden');
-        
-        tabLogBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 shadow transition";
-        tabOverviewBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition";
+      if (view === 'log') {
+        viewLog.classList.remove('hidden');
+        viewOverview.classList.add('hidden');
+        navLog.className = "flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
+        navOverview.className = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
+        updatePlayerView();
       } else {
-        logView.classList.add('hidden');
-        overviewView.classList.remove('hidden');
-        
-        tabOverviewBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 shadow transition";
-        tabLogBtn.className = "flex-1 py-2 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition";
-        
-        renderOverview(); // Refresh overview data when opened
+        viewLog.classList.add('hidden');
+        viewOverview.classList.remove('hidden');
+        navOverview.className = "flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
+        navLog.className = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
+        renderOverview();
       }
     }
 
+    const playerSelect = document.getElementById('playerSelect');
+
     function renderPlayerDropdown() {
+      const currentSelection = playerSelect.value;
       playerSelect.innerHTML = '';
-      players.forEach(p => {
+      players.sort().forEach(p => {
         const option = document.createElement('option');
         option.value = p;
         option.textContent = p;
         playerSelect.appendChild(option);
       });
+      if (currentSelection && players.includes(currentSelection)) {
+        playerSelect.value = currentSelection;
+      }
     }
 
     function addNewPlayer() {
       const input = document.getElementById('newPlayerInput');
       const newName = input.value.trim();
-      if (!newName) {
-        alert("Please enter a player's name.");
-        return;
-      }
+      if (!newName) return;
       
       if (!players.includes(newName)) {
         players.push(newName);
         localStorage.setItem('cricket_players_list', JSON.stringify(players));
         renderPlayerDropdown();
       }
-      
       playerSelect.value = newName;
       input.value = '';
       updatePlayerView();
+    }
+
+    function toggleCustomFine() {
+      const fineSelect = document.getElementById('fineSelect');
+      const customGroup = document.getElementById('customFineGroup');
+      if (fineSelect.value === 'CUSTOM') {
+        customGroup.classList.remove('hidden');
+      } else {
+        customGroup.classList.add('hidden');
+      }
     }
 
     playerSelect.addEventListener('change', updatePlayerView);
@@ -174,28 +176,28 @@
     function logFine() {
       const player = playerSelect.value;
       const fineSelect = document.getElementById('fineSelect');
-      const customInput = document.getElementById('customFineInput');
-      
-      let fineName = customInput.value.trim();
+      let fineName = fineSelect.value;
 
-      // If custom fine text is empty, fall back to preset dropdown
-      if (!fineName) {
-        fineName = fineSelect.value;
+      if (fineName === 'CUSTOM') {
+        const customInput = document.getElementById('customFineInput');
+        fineName = customInput.value.trim();
+        if (!fineName) {
+          alert('Please enter a custom fine description.');
+          return;
+        }
+        customInput.value = '';
+        document.getElementById('customFineGroup').classList.add('hidden');
       }
 
       if (!fineName) {
-        alert('Please select a preset fine or type a custom fine.');
+        alert('Please select a fine.');
         return;
       }
 
       if (!fineData[player]) fineData[player] = {};
       fineData[player][fineName] = (fineData[player][fineName] || 0) + 1;
 
-      // Save to localStorage
       localStorage.setItem('cricket_fines_data', JSON.stringify(fineData));
-      
-      // Reset inputs & update UI
-      customInput.value = '';
       fineSelect.value = '';
       updatePlayerView();
     }
@@ -206,17 +208,10 @@
       const nameHeader = document.getElementById('viewPlayerName');
       const totalBadge = document.getElementById('viewPlayerTotal');
 
-      if (!player) {
-        nameHeader.textContent = "No Player Selected";
-        totalBadge.textContent = "0 Fines";
-        historyDiv.innerHTML = '<p class="text-slate-500 italic py-2">Add or select a player to view fines.</p>';
-        return;
-      }
+      if (!player) return;
 
       nameHeader.textContent = `${player}'s Fines`;
-
-      const playerFines = fineData[player] || {};
-      const entries = Object.entries(playerFines);
+      const entries = Object.entries(fineData[player] || {});
       
       let grandTotal = 0;
       historyDiv.innerHTML = '';
@@ -226,17 +221,53 @@
       } else {
         entries.forEach(([fine, count]) => {
           grandTotal += count;
-          const row = document.createElement('div');
-          row.className = 'flex justify-between items-center bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50';
-          row.innerHTML = `
-            <span>${fine}</span>
-            <span class="bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded text-xs">${count}</span>
-          `;
-          historyDiv.appendChild(row);
+          historyDiv.innerHTML += `
+            <div class="flex justify-between items-center bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
+              <span>${fine}</span>
+              <span class="bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded text-xs">${count}</span>
+            </div>`;
         });
       }
-
       totalBadge.textContent = `${grandTotal} Total Fine${grandTotal === 1 ? '' : 's'}`;
+    }
+
+    function renderOverview() {
+      const container = document.getElementById('overviewContainer');
+      container.innerHTML = '';
+
+      const leaderboard = players.map(p => {
+        const fines = fineData[p] || {};
+        const total = Object.values(fines).reduce((sum, val) => sum + val, 0);
+        return { name: p, fines, total };
+      }).filter(p => p.total > 0).sort((a, b) => b.total - a.total);
+
+      if (leaderboard.length === 0) {
+        container.innerHTML = '<div class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center text-slate-400">No fines logged yet.</div>';
+        return;
+      }
+
+      leaderboard.forEach(p => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md";
+        
+        let finesHtml = Object.entries(p.fines)
+          .sort((a, b) => b[1] - a[1])
+          .map(([fine, count]) => 
+          `<div class="flex justify-between items-center my-1 text-xs text-slate-300">
+            <span>${fine}</span>
+            <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">${count}</span>
+          </div>`
+        ).join('');
+        
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-700">
+            <h2 class="text-base font-bold text-white">${p.name}</h2>
+            <span class="text-xs text-slate-950 bg-amber-400 px-2 py-1 rounded-lg font-bold">${p.total} Total</span>
+          </div>
+          <div>${finesHtml}</div>
+        `;
+        container.appendChild(card);
+      });
     }
 
     function clearCurrentPlayer() {
@@ -249,52 +280,6 @@
       }
     }
 
-    function renderOverview() {
-      const overviewContainer = document.getElementById('overviewView');
-      overviewContainer.innerHTML = '';
-
-      // Create an array of players with their totals to sort them (Leaderboard style)
-      let playerStats = players.map(p => {
-        const fData = fineData[p] || {};
-        const total = Object.values(fData).reduce((sum, count) => sum + count, 0);
-        return { name: p, fines: fData, total: total };
-      });
-
-      // Sort by highest total fines first
-      playerStats.sort((a, b) => b.total - a.total);
-
-      playerStats.forEach(p => {
-        // Skip players with 0 fines so the overview stays clean
-        if (p.total === 0) return;
-
-        const card = document.createElement('div');
-        card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md";
-        
-        let finesHtml = Object.entries(p.fines).map(([fine, count]) => 
-          `<div class="flex justify-between items-center my-1 text-xs text-slate-300">
-            <span>${fine}</span>
-            <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">${count}</span>
-          </div>`
-        ).join('');
-        
-        card.innerHTML = `
-          <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-700">
-            <h2 class="text-base font-bold text-white">${p.name}</h2>
-            <span class="text-xs bg-slate-900 text-amber-400 font-semibold px-3 py-1 rounded-full border border-slate-700">
-              ${p.total} total
-            </span>
-          </div>
-          <div>${finesHtml}</div>
-        `;
-        overviewContainer.appendChild(card);
-      });
-
-      if (overviewContainer.innerHTML === '') {
-        overviewContainer.innerHTML = '<div class="text-center p-6 text-slate-500 italic bg-slate-800 rounded-xl border border-slate-700">No fines have been logged yet for the team.</div>';
-      }
-    }
-
-    // Initialize UI on load
     renderPlayerDropdown();
     updatePlayerView();
   </script>
