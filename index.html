@@ -23,21 +23,17 @@
   <div id="appContainer" class="hidden">
     <header class="text-center my-4">
       <h1 class="text-2xl font-bold text-amber-400">🏏 Stafford Cricket Fines</h1>
-      <p class="text-slate-400 text-xs mt-1">Select player, fine them, done.</p>
     </header>
 
     <main class="max-w-md mx-auto space-y-4">
       
       <!-- NAVIGATION TABS -->
-      <div class="flex gap-1.5">
-        <button id="navLog" onclick="switchView('log')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition shadow-md">
+      <div class="flex gap-2">
+        <button id="navLog" onclick="switchView('log')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-md">
           Log Fines
         </button>
-        <button id="navLeaderboard" onclick="switchView('leaderboard')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-xs transition shadow-md">
-          Leaderboard
-        </button>
-        <button id="navOverview" onclick="switchView('overview')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-xs transition shadow-md">
-          Team Overview
+        <button id="navLeaderboard" onclick="switchView('leaderboard')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-3 rounded-xl text-sm transition shadow-md">
+          Fine Leaderboard
         </button>
       </div>
 
@@ -98,21 +94,16 @@
         </div>
       </div>
 
-      <!-- VIEW 2: FINE LEADERBOARD (TOP OFFENDER PER FINE) -->
+      <!-- VIEW 2: INDIVIDUAL FINES LEADERBOARD -->
       <div id="viewLeaderboard" class="space-y-4 hidden">
         <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2 text-center">
           <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">👑 Top Offender Per Fine</h2>
-          <p class="text-xs text-slate-400 mt-0.5">The #1 player for each fine category.</p>
+          <p class="text-xs text-slate-400 mt-1">Showing ONLY the #1 player for each specific fine.</p>
         </div>
-        <div id="leaderboardContainer" class="space-y-3"></div>
-      </div>
-
-      <!-- VIEW 3: TEAM OVERVIEW -->
-      <div id="viewOverview" class="space-y-4 hidden">
-        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2">
-          <p class="text-xs text-slate-400 text-center">Full team breakdown ranked by total fines.</p>
+        
+        <div id="leaderboardContainer" class="space-y-3">
+          <!-- Populated by JavaScript -->
         </div>
-        <div id="overviewContainer" class="space-y-3"></div>
       </div>
 
     </main>
@@ -165,22 +156,18 @@
     function switchView(view) {
       const navLog = document.getElementById('navLog');
       const navLeaderboard = document.getElementById('navLeaderboard');
-      const navOverview = document.getElementById('navOverview');
       
       const viewLog = document.getElementById('viewLog');
       const viewLeaderboard = document.getElementById('viewLeaderboard');
-      const viewOverview = document.getElementById('viewOverview');
 
-      const inactiveStyle = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-xs transition shadow-md";
-      const activeStyle = "flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition shadow-md";
+      const inactiveStyle = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-3 rounded-xl text-sm transition shadow-md";
+      const activeStyle = "flex-1 bg-amber-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-md";
 
       navLog.className = inactiveStyle;
       navLeaderboard.className = inactiveStyle;
-      navOverview.className = inactiveStyle;
 
       viewLog.classList.add('hidden');
       viewLeaderboard.classList.add('hidden');
-      viewOverview.classList.add('hidden');
 
       if (view === 'log') {
         viewLog.classList.remove('hidden');
@@ -190,10 +177,6 @@
         viewLeaderboard.classList.remove('hidden');
         navLeaderboard.className = activeStyle;
         renderLeaderboard();
-      } else {
-        viewOverview.classList.remove('hidden');
-        navOverview.className = activeStyle;
-        renderOverview();
       }
     }
 
@@ -332,12 +315,12 @@
       totalBadge.textContent = `${grandTotal} Total Fine${grandTotal === 1 ? '' : 's'}`;
     }
 
-    // --- LEADERBOARD (TOP OFFENDER PER FINE CATEGORY) ---
+    // --- LEADERBOARD: INDIVIDUAL FINES ONLY ---
     function renderLeaderboard() {
       const container = document.getElementById('leaderboardContainer');
       container.innerHTML = '';
 
-      // Aggregate counts by fine reason
+      // 1. Group all fine data by the Fine Name
       const fineTotalsMap = {};
 
       Object.entries(fineData).forEach(([player, fines]) => {
@@ -356,67 +339,30 @@
         return;
       }
 
-      // Display top offender for each fine type
+      // 2. Loop through every fine type and find ONLY the #1 player
       fineCategories.sort().forEach(fineName => {
+        // Sort players by who has the most of this specific fine
         const sortedList = fineTotalsMap[fineName].sort((a, b) => b.count - a.count);
+        
+        // Get the top score
         const maxCount = sortedList[0].count;
         
-        // Handle potential ties for #1
+        // Find everyone tied for that #1 spot (in case two people drop exactly 5 catches)
         const topOffenders = sortedList.filter(item => item.count === maxCount);
-        const playerNames = topOffenders.map(item => item.player).join(', ');
+        const playerNames = topOffenders.map(item => item.player).join(' & ');
 
+        // Build the card UI showing ONLY the #1 offender(s)
         const card = document.createElement('div');
-        card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md";
-        card.innerHTML = `
-          <div class="flex justify-between items-center border-b border-slate-700/80 pb-2 mb-2">
-            <h3 class="text-sm font-bold text-amber-400">${fineName}</h3>
-            <span class="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-bold">
-              ${maxCount} ${maxCount === 1 ? 'time' : 'times'}
-            </span>
-          </div>
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-400">👑 Top Offender:</span>
-            <span class="text-sm font-bold text-white">${playerNames}</span>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function renderOverview() {
-      const container = document.getElementById('overviewContainer');
-      container.innerHTML = '';
-
-      const leaderboard = players.map(p => {
-        const fines = fineData[p] || {};
-        const total = Object.values(fines).reduce((sum, val) => sum + val, 0);
-        return { name: p, fines, total };
-      }).filter(p => p.total > 0).sort((a, b) => b.total - a.total);
-
-      if (leaderboard.length === 0) {
-        container.innerHTML = '<div class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center text-slate-400">No fines logged yet.</div>';
-        return;
-      }
-
-      leaderboard.forEach(p => {
-        const card = document.createElement('div');
-        card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md";
-        
-        let finesHtml = Object.entries(p.fines)
-          .sort((a, b) => b[1] - a[1])
-          .map(([fine, count]) => 
-          `<div class="flex justify-between items-center my-1 text-xs text-slate-300">
-            <span>${fine}</span>
-            <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">${count}</span>
-          </div>`
-        ).join('');
+        card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md flex justify-between items-center";
         
         card.innerHTML = `
-          <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-700">
-            <h2 class="text-base font-bold text-white">${p.name}</h2>
-            <span class="text-xs text-slate-950 bg-amber-400 px-2 py-1 rounded-lg font-bold">${p.total} Total</span>
+          <div>
+            <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider">${fineName}</h3>
+            <p class="text-xs text-slate-400 mt-1">👑 <span class="font-bold text-white text-base">${playerNames}</span></p>
           </div>
-          <div>${finesHtml}</div>
+          <div class="bg-amber-500/20 text-amber-300 text-lg px-4 py-2 rounded-xl font-bold border border-amber-500/30">
+            ${maxCount}
+          </div>
         `;
         container.appendChild(card);
       });
