@@ -56,28 +56,29 @@
             </div>
           </div>
 
-          <!-- Fine Selection Dropdown -->
+          <!-- Fine Selection Dropdown & Add Permanent Fine -->
           <div>
             <label class="block text-xs text-slate-400 mb-1 font-medium">Fine Reason</label>
             <select id="fineSelect" onchange="toggleCustomFine()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
               <!-- Dynamically populated -->
             </select>
+
+            <div class="flex gap-2 mt-2">
+              <input type="text" id="newFineReasonInput" placeholder="Add new permanent fine option..." class="flex-1 bg-slate-900/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+              <button onclick="addNewFineReason()" class="bg-slate-700 hover:bg-slate-600 text-amber-400 font-bold px-3 py-2 rounded-xl text-xs transition">
+                + Add Fine
+              </button>
+            </div>
           </div>
 
-          <!-- Custom Fine Input -->
-          <div id="customFineGroup" class="hidden space-y-3">
-            <div>
-              <label class="block text-xs text-slate-400 mb-1 font-medium">Custom Fine Description</label>
-              <input type="text" id="customFineInput" placeholder="e.g. Fielding like Tony" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
-            </div>
-            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-              <input type="checkbox" id="permanentFineCheck" class="w-4 h-4 accent-amber-500 rounded bg-slate-900 border-slate-700">
-              Save to dropdown as a permanent fine
-            </label>
+          <!-- One-Off Custom Fine Input -->
+          <div id="customFineGroup" class="hidden">
+            <label class="block text-xs text-slate-400 mb-1 font-medium">One-Off Custom Fine Description</label>
+            <input type="text" id="customFineInput" placeholder="e.g. Fielding like Tony" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
           </div>
 
           <button onclick="logFine()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-3 rounded-xl text-sm transition active:scale-95 shadow-md">
-            + Add Fine
+            + Issue Fine to Player
           </button>
         </div>
 
@@ -122,12 +123,10 @@
       document.getElementById('appContainer').classList.remove('hidden');
     }
 
-    // Allow hitting "Enter" to submit password
     document.getElementById('passwordInput').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') checkPassword();
     });
 
-    // Check if already authenticated this session
     if (sessionStorage.getItem('cricket_auth') === 'true') {
       unlockApp();
     }
@@ -197,7 +196,7 @@
       fineReasons.forEach(f => {
         fineSelect.innerHTML += `<option value="${f}">${f}</option>`;
       });
-      fineSelect.innerHTML += '<option value="CUSTOM">✍️ Enter Custom Fine...</option>';
+      fineSelect.innerHTML += '<option value="CUSTOM">✍️ One-off Custom Fine...</option>';
       
       if (currentSelection && fineReasons.includes(currentSelection)) {
         fineSelect.value = currentSelection;
@@ -218,6 +217,21 @@
       playerSelect.value = newName;
       input.value = '';
       updatePlayerView();
+    }
+
+    function addNewFineReason() {
+      const input = document.getElementById('newFineReasonInput');
+      const newFine = input.value.trim();
+      if (!newFine) return;
+      
+      if (!fineReasons.includes(newFine)) {
+        fineReasons.push(newFine);
+        localStorage.setItem('cricket_fine_reasons_list', JSON.stringify(fineReasons));
+        renderFineDropdown();
+      }
+      document.getElementById('fineSelect').value = newFine;
+      input.value = '';
+      toggleCustomFine();
     }
 
     function toggleCustomFine() {
@@ -246,16 +260,7 @@
           return;
         }
 
-        // Handle Permanent Fine Saving
-        const isPermanent = document.getElementById('permanentFineCheck').checked;
-        if (isPermanent && !fineReasons.includes(fineName)) {
-          fineReasons.push(fineName);
-          localStorage.setItem('cricket_fine_reasons_list', JSON.stringify(fineReasons));
-          renderFineDropdown(); // Re-render to show it in the list immediately
-        }
-
         customInput.value = '';
-        document.getElementById('permanentFineCheck').checked = false;
         document.getElementById('customFineGroup').classList.add('hidden');
       }
 
