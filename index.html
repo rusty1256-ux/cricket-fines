@@ -29,11 +29,14 @@
     <main class="max-w-md mx-auto space-y-4">
       
       <!-- NAVIGATION TABS -->
-      <div class="flex gap-2">
-        <button id="navLog" onclick="switchView('log')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
+      <div class="flex gap-1.5">
+        <button id="navLog" onclick="switchView('log')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition shadow-md">
           Log Fines
         </button>
-        <button id="navOverview" onclick="switchView('overview')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
+        <button id="navLeaderboard" onclick="switchView('leaderboard')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-xs transition shadow-md">
+          Leaderboard
+        </button>
+        <button id="navOverview" onclick="switchView('overview')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-xs transition shadow-md">
           Team Overview
         </button>
       </div>
@@ -95,7 +98,16 @@
         </div>
       </div>
 
-      <!-- VIEW 2: TEAM OVERVIEW -->
+      <!-- VIEW 2: LEADERBOARD -->
+      <div id="viewLeaderboard" class="space-y-4 hidden">
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2 text-center">
+          <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">🏆 Fine Leaderboard</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Rankings based on total number of fines received.</p>
+        </div>
+        <div id="leaderboardContainer" class="space-y-2"></div>
+      </div>
+
+      <!-- VIEW 3: TEAM OVERVIEW -->
       <div id="viewOverview" class="space-y-4 hidden">
         <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2">
           <p class="text-xs text-slate-400 text-center">Full team breakdown ranked by total fines.</p>
@@ -152,21 +164,36 @@
     // --- NAVIGATION ---
     function switchView(view) {
       const navLog = document.getElementById('navLog');
+      const navLeaderboard = document.getElementById('navLeaderboard');
       const navOverview = document.getElementById('navOverview');
+      
       const viewLog = document.getElementById('viewLog');
+      const viewLeaderboard = document.getElementById('viewLeaderboard');
       const viewOverview = document.getElementById('viewOverview');
+
+      // Reset tabs styling
+      const inactiveStyle = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-xs transition shadow-md";
+      const activeStyle = "flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition shadow-md";
+
+      navLog.className = inactiveStyle;
+      navLeaderboard.className = inactiveStyle;
+      navOverview.className = inactiveStyle;
+
+      viewLog.classList.add('hidden');
+      viewLeaderboard.classList.add('hidden');
+      viewOverview.classList.add('hidden');
 
       if (view === 'log') {
         viewLog.classList.remove('hidden');
-        viewOverview.classList.add('hidden');
-        navLog.className = "flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
-        navOverview.className = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
+        navLog.className = activeStyle;
         updatePlayerView();
+      } else if (view === 'leaderboard') {
+        viewLeaderboard.classList.remove('hidden');
+        navLeaderboard.className = activeStyle;
+        renderLeaderboard();
       } else {
-        viewLog.classList.add('hidden');
         viewOverview.classList.remove('hidden');
-        navOverview.className = "flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
-        navLog.className = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md";
+        navOverview.className = activeStyle;
         renderOverview();
       }
     }
@@ -304,6 +331,43 @@
         });
       }
       totalBadge.textContent = `${grandTotal} Total Fine${grandTotal === 1 ? '' : 's'}`;
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboardContainer');
+      container.innerHTML = '';
+
+      const leaderboard = players.map(p => {
+        const fines = fineData[p] || {};
+        const total = Object.values(fines).reduce((sum, val) => sum + val, 0);
+        return { name: p, total };
+      }).filter(p => p.total > 0).sort((a, b) => b.total - a.total);
+
+      if (leaderboard.length === 0) {
+        container.innerHTML = '<div class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center text-slate-400">No fines logged yet.</div>';
+        return;
+      }
+
+      leaderboard.forEach((p, index) => {
+        const rank = index + 1;
+        let badgeStyle = "bg-slate-700 text-slate-300";
+        if (rank === 1) badgeStyle = "bg-amber-400 text-slate-950 font-black";
+        else if (rank === 2) badgeStyle = "bg-slate-300 text-slate-950 font-black";
+        else if (rank === 3) badgeStyle = "bg-amber-700 text-amber-100 font-black";
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-800 p-3.5 rounded-xl border border-slate-700 shadow-md flex justify-between items-center";
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 flex items-center justify-center rounded-lg text-xs ${badgeStyle}">#${rank}</span>
+            <span class="font-bold text-white text-sm">${p.name}</span>
+          </div>
+          <span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-3 py-1 rounded-full font-bold">
+            ${p.total} ${p.total === 1 ? 'fine' : 'fines'}
+          </span>
+        `;
+        container.appendChild(card);
+      });
     }
 
     function renderOverview() {
