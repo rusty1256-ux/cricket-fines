@@ -98,13 +98,13 @@
         </div>
       </div>
 
-      <!-- VIEW 2: LEADERBOARD -->
+      <!-- VIEW 2: FINE LEADERBOARD (TOP OFFENDER PER FINE) -->
       <div id="viewLeaderboard" class="space-y-4 hidden">
         <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2 text-center">
-          <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">🏆 Fine Leaderboard</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Rankings based on total number of fines received.</p>
+          <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider">👑 Top Offender Per Fine</h2>
+          <p class="text-xs text-slate-400 mt-0.5">The #1 player for each fine category.</p>
         </div>
-        <div id="leaderboardContainer" class="space-y-2"></div>
+        <div id="leaderboardContainer" class="space-y-3"></div>
       </div>
 
       <!-- VIEW 3: TEAM OVERVIEW -->
@@ -171,7 +171,6 @@
       const viewLeaderboard = document.getElementById('viewLeaderboard');
       const viewOverview = document.getElementById('viewOverview');
 
-      // Reset tabs styling
       const inactiveStyle = "flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-xs transition shadow-md";
       const activeStyle = "flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition shadow-md";
 
@@ -333,38 +332,52 @@
       totalBadge.textContent = `${grandTotal} Total Fine${grandTotal === 1 ? '' : 's'}`;
     }
 
+    // --- LEADERBOARD (TOP OFFENDER PER FINE CATEGORY) ---
     function renderLeaderboard() {
       const container = document.getElementById('leaderboardContainer');
       container.innerHTML = '';
 
-      const leaderboard = players.map(p => {
-        const fines = fineData[p] || {};
-        const total = Object.values(fines).reduce((sum, val) => sum + val, 0);
-        return { name: p, total };
-      }).filter(p => p.total > 0).sort((a, b) => b.total - a.total);
+      // Aggregate counts by fine reason
+      const fineTotalsMap = {};
 
-      if (leaderboard.length === 0) {
+      Object.entries(fineData).forEach(([player, fines]) => {
+        Object.entries(fines).forEach(([fineName, count]) => {
+          if (count > 0) {
+            if (!fineTotalsMap[fineName]) fineTotalsMap[fineName] = [];
+            fineTotalsMap[fineName].push({ player, count });
+          }
+        });
+      });
+
+      const fineCategories = Object.keys(fineTotalsMap);
+
+      if (fineCategories.length === 0) {
         container.innerHTML = '<div class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center text-slate-400">No fines logged yet.</div>';
         return;
       }
 
-      leaderboard.forEach((p, index) => {
-        const rank = index + 1;
-        let badgeStyle = "bg-slate-700 text-slate-300";
-        if (rank === 1) badgeStyle = "bg-amber-400 text-slate-950 font-black";
-        else if (rank === 2) badgeStyle = "bg-slate-300 text-slate-950 font-black";
-        else if (rank === 3) badgeStyle = "bg-amber-700 text-amber-100 font-black";
+      // Display top offender for each fine type
+      fineCategories.sort().forEach(fineName => {
+        const sortedList = fineTotalsMap[fineName].sort((a, b) => b.count - a.count);
+        const maxCount = sortedList[0].count;
+        
+        // Handle potential ties for #1
+        const topOffenders = sortedList.filter(item => item.count === maxCount);
+        const playerNames = topOffenders.map(item => item.player).join(', ');
 
         const card = document.createElement('div');
-        card.className = "bg-slate-800 p-3.5 rounded-xl border border-slate-700 shadow-md flex justify-between items-center";
+        card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md";
         card.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="w-7 h-7 flex items-center justify-center rounded-lg text-xs ${badgeStyle}">#${rank}</span>
-            <span class="font-bold text-white text-sm">${p.name}</span>
+          <div class="flex justify-between items-center border-b border-slate-700/80 pb-2 mb-2">
+            <h3 class="text-sm font-bold text-amber-400">${fineName}</h3>
+            <span class="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-bold">
+              ${maxCount} ${maxCount === 1 ? 'time' : 'times'}
+            </span>
           </div>
-          <span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-3 py-1 rounded-full font-bold">
-            ${p.total} ${p.total === 1 ? 'fine' : 'fines'}
-          </span>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">👑 Top Offender:</span>
+            <span class="text-sm font-bold text-white">${playerNames}</span>
+          </div>
         `;
         container.appendChild(card);
       });
