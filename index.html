@@ -8,96 +8,131 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 font-sans pb-10">
 
-  <header class="text-center my-4">
-    <h1 class="text-2xl font-bold text-amber-400">🏏 Stafford Cricket Fines</h1>
-    <p class="text-slate-400 text-xs mt-1">Select player, fine them, done.</p>
-  </header>
+  <!-- PASSWORD SCREEN -->
+  <div id="authContainer" class="max-w-xs mx-auto mt-20 text-center space-y-4">
+    <h1 class="text-2xl font-bold text-amber-400">🏏 App Locked</h1>
+    <p class="text-slate-400 text-xs">Please enter the password to access.</p>
+    <input type="password" id="passwordInput" placeholder="Password" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-center text-white focus:outline-none focus:border-amber-400">
+    <button onclick="checkPassword()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-3 rounded-xl transition shadow-md">
+      Unlock
+    </button>
+    <p id="authError" class="text-red-400 text-xs hidden">Incorrect password.</p>
+  </div>
 
-  <main class="max-w-md mx-auto space-y-4">
-    
-    <!-- NAVIGATION TABS -->
-    <div class="flex gap-2">
-      <button id="navLog" onclick="switchView('log')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
-        Log Fines
-      </button>
-      <button id="navOverview" onclick="switchView('overview')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
-        Team Overview
-      </button>
-    </div>
+  <!-- MAIN APP (Hidden initially) -->
+  <div id="appContainer" class="hidden">
+    <header class="text-center my-4">
+      <h1 class="text-2xl font-bold text-amber-400">🏏 Stafford Cricket Fines</h1>
+      <p class="text-slate-400 text-xs mt-1">Select player, fine them, done.</p>
+    </header>
 
-    <!-- VIEW 1: LOGGING SECTION -->
-    <div id="viewLog" class="space-y-4">
+    <main class="max-w-md mx-auto space-y-4">
       
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
+      <!-- NAVIGATION TABS -->
+      <div class="flex gap-2">
+        <button id="navLog" onclick="switchView('log')" class="flex-1 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
+          Log Fines
+        </button>
+        <button id="navOverview" onclick="switchView('overview')" class="flex-1 bg-slate-800 border border-amber-500/50 text-amber-400 font-bold py-2.5 rounded-xl text-sm transition shadow-md">
+          Team Overview
+        </button>
+      </div>
+
+      <!-- VIEW 1: LOGGING SECTION -->
+      <div id="viewLog" class="space-y-4">
         
-        <!-- Select or Add Player -->
-        <div>
-          <label class="block text-xs text-slate-400 mb-1 font-medium">Select Player</label>
-          <select id="playerSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400"></select>
+        <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
+          
+          <!-- Select or Add Player -->
+          <div>
+            <label class="block text-xs text-slate-400 mb-1 font-medium">Select Player</label>
+            <select id="playerSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400"></select>
 
-          <div class="flex gap-2 mt-2">
-            <input type="text" id="newPlayerInput" placeholder="Add new player name..." class="flex-1 bg-slate-900/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
-            <button onclick="addNewPlayer()" class="bg-slate-700 hover:bg-slate-600 text-amber-400 font-bold px-3 py-2 rounded-xl text-xs transition">
-              + Add Player
-            </button>
+            <div class="flex gap-2 mt-2">
+              <input type="text" id="newPlayerInput" placeholder="Add new player name..." class="flex-1 bg-slate-900/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+              <button onclick="addNewPlayer()" class="bg-slate-700 hover:bg-slate-600 text-amber-400 font-bold px-3 py-2 rounded-xl text-xs transition">
+                + Add Player
+              </button>
+            </div>
           </div>
+
+          <!-- Fine Selection Dropdown -->
+          <div>
+            <label class="block text-xs text-slate-400 mb-1 font-medium">Fine Reason</label>
+            <select id="fineSelect" onchange="toggleCustomFine()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <!-- Custom Fine Input -->
+          <div id="customFineGroup" class="hidden space-y-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1 font-medium">Custom Fine Description</label>
+              <input type="text" id="customFineInput" placeholder="e.g. Fielding like Tony" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
+            </div>
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+              <input type="checkbox" id="permanentFineCheck" class="w-4 h-4 accent-amber-500 rounded bg-slate-900 border-slate-700">
+              Save to dropdown as a permanent fine
+            </label>
+          </div>
+
+          <button onclick="logFine()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-3 rounded-xl text-sm transition active:scale-95 shadow-md">
+            + Add Fine
+          </button>
         </div>
 
-        <!-- Fine Selection Dropdown -->
-        <div>
-          <label class="block text-xs text-slate-400 mb-1 font-medium">Fine Reason</label>
-          <select id="fineSelect" onchange="toggleCustomFine()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
-            <option value="">-- Choose fine --</option>
-            <option value="Dropped Catch">Dropped Catch</option>
-            <option value="Miss Field">Miss Field</option>
-            <option value="Foot Fielding">Foot Fielding</option>
-            <option value="Complaining">Complaining</option>
-            <option value="Swearing">Swearing</option>
-            <option value="Arguing at Fines">Arguing at Fines</option>
-            <option value="Late">Late</option>
-            <option value="Drinking during game">Drinking during game</option>
-            <option value="Fines No Show">Fines No Show</option>
-            <option value="Non Stafford Kit">Non Stafford Kit</option>
-            <option value="No Passion">No Passion</option>
-            <option value="CUSTOM">✍️ Enter Custom Fine...</option>
-          </select>
+        <!-- Individual Player Fine History -->
+        <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+            <h2 id="viewPlayerName" class="text-sm font-semibold uppercase tracking-wider text-amber-400">Player Fines</h2>
+            <span id="viewPlayerTotal" class="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-1 rounded-full font-bold">0 Fines</span>
+          </div>
+          <div id="fineHistory" class="space-y-2 text-xs text-slate-300 min-h-[60px]"></div>
+          <button onclick="clearCurrentPlayer()" class="w-full text-red-400 text-xs text-center pt-2 hover:underline">
+            Reset this player's fines
+          </button>
         </div>
-
-        <!-- Custom Fine Input (Only visible when CUSTOM option selected) -->
-        <div id="customFineGroup" class="hidden">
-          <label class="block text-xs text-slate-400 mb-1 font-medium">Custom Fine Description</label>
-          <input type="text" id="customFineInput" placeholder="e.g. Fielding like Tony" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-400">
-        </div>
-
-        <button onclick="logFine()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-3 rounded-xl text-sm transition active:scale-95 shadow-md">
-          + Add Fine
-        </button>
       </div>
 
-      <!-- Individual Player Fine History -->
-      <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-3">
-        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-          <h2 id="viewPlayerName" class="text-sm font-semibold uppercase tracking-wider text-amber-400">Player Fines</h2>
-          <span id="viewPlayerTotal" class="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-1 rounded-full font-bold">0 Fines</span>
+      <!-- VIEW 2: TEAM OVERVIEW -->
+      <div id="viewOverview" class="space-y-4 hidden">
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2">
+          <p class="text-xs text-slate-400 text-center">Full team breakdown ranked by total fines.</p>
         </div>
-        <div id="fineHistory" class="space-y-2 text-xs text-slate-300 min-h-[60px]"></div>
-        <button onclick="clearCurrentPlayer()" class="w-full text-red-400 text-xs text-center pt-2 hover:underline">
-          Reset this player's fines
-        </button>
+        <div id="overviewContainer" class="space-y-3"></div>
       </div>
-    </div>
 
-    <!-- VIEW 2: TEAM OVERVIEW -->
-    <div id="viewOverview" class="space-y-4 hidden">
-      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg mb-2">
-        <p class="text-xs text-slate-400 text-center">Full team breakdown ranked by total fines.</p>
-      </div>
-      <div id="overviewContainer" class="space-y-3"></div>
-    </div>
-
-  </main>
+    </main>
+  </div>
 
   <script>
+    // --- PASSWORD AUTHENTICATION ---
+    function checkPassword() {
+      const pwd = document.getElementById('passwordInput').value;
+      if (pwd === 'password') {
+        sessionStorage.setItem('cricket_auth', 'true');
+        unlockApp();
+      } else {
+        document.getElementById('authError').classList.remove('hidden');
+      }
+    }
+
+    function unlockApp() {
+      document.getElementById('authContainer').classList.add('hidden');
+      document.getElementById('appContainer').classList.remove('hidden');
+    }
+
+    // Allow hitting "Enter" to submit password
+    document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') checkPassword();
+    });
+
+    // Check if already authenticated this session
+    if (sessionStorage.getItem('cricket_auth') === 'true') {
+      unlockApp();
+    }
+
+    // --- DATA & STATE ---
     const initialPlayers = [
       "Ollie Peters", "Trev", "Ben", "Chris", "Kyle", "Joe (C)", 
       "James Found", "Toby", "Ali", "Zach", "Jack", "Paul", "Nithin", 
@@ -105,10 +140,17 @@
       "Sean", "Arnav", "Ant", "Jonny", "Dan", "Chris Dob", "Jas", "Steve"
     ];
 
+    const initialFines = [
+      "Dropped Catch", "Miss Field", "Foot Fielding", "Complaining",
+      "Swearing", "Arguing at Fines", "Late", "Drinking during game",
+      "Fines No Show", "Non Stafford Kit", "No Passion"
+    ];
+
     let players = JSON.parse(localStorage.getItem('cricket_players_list')) || initialPlayers;
     let fineData = JSON.parse(localStorage.getItem('cricket_fines_data')) || {};
+    let fineReasons = JSON.parse(localStorage.getItem('cricket_fine_reasons_list')) || initialFines;
 
-    // Navigation Switcher
+    // --- NAVIGATION ---
     function switchView(view) {
       const navLog = document.getElementById('navLog');
       const navOverview = document.getElementById('navOverview');
@@ -130,8 +172,9 @@
       }
     }
 
+    // --- RENDERERS ---
     const playerSelect = document.getElementById('playerSelect');
-
+    
     function renderPlayerDropdown() {
       const currentSelection = playerSelect.value;
       playerSelect.innerHTML = '';
@@ -146,6 +189,22 @@
       }
     }
 
+    function renderFineDropdown() {
+      const fineSelect = document.getElementById('fineSelect');
+      const currentSelection = fineSelect.value;
+      
+      fineSelect.innerHTML = '<option value="">-- Choose fine --</option>';
+      fineReasons.forEach(f => {
+        fineSelect.innerHTML += `<option value="${f}">${f}</option>`;
+      });
+      fineSelect.innerHTML += '<option value="CUSTOM">✍️ Enter Custom Fine...</option>';
+      
+      if (currentSelection && fineReasons.includes(currentSelection)) {
+        fineSelect.value = currentSelection;
+      }
+    }
+
+    // --- ACTIONS ---
     function addNewPlayer() {
       const input = document.getElementById('newPlayerInput');
       const newName = input.value.trim();
@@ -181,11 +240,22 @@
       if (fineName === 'CUSTOM') {
         const customInput = document.getElementById('customFineInput');
         fineName = customInput.value.trim();
+        
         if (!fineName) {
           alert('Please enter a custom fine description.');
           return;
         }
+
+        // Handle Permanent Fine Saving
+        const isPermanent = document.getElementById('permanentFineCheck').checked;
+        if (isPermanent && !fineReasons.includes(fineName)) {
+          fineReasons.push(fineName);
+          localStorage.setItem('cricket_fine_reasons_list', JSON.stringify(fineReasons));
+          renderFineDropdown(); // Re-render to show it in the list immediately
+        }
+
         customInput.value = '';
+        document.getElementById('permanentFineCheck').checked = false;
         document.getElementById('customFineGroup').classList.add('hidden');
       }
 
@@ -198,7 +268,7 @@
       fineData[player][fineName] = (fineData[player][fineName] || 0) + 1;
 
       localStorage.setItem('cricket_fines_data', JSON.stringify(fineData));
-      fineSelect.value = '';
+      fineSelect.value = ''; 
       updatePlayerView();
     }
 
@@ -280,7 +350,9 @@
       }
     }
 
+    // --- INITIALIZATION ---
     renderPlayerDropdown();
+    renderFineDropdown();
     updatePlayerView();
   </script>
 </body>
